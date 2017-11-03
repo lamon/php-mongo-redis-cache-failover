@@ -18,13 +18,32 @@ class CustomersController extends Controller
     {
         $cacheService = $this->get('cache_service');
 
-        if (empty($customers)) {
-            $database = $this->get('database_service')->getDatabase();
-            $customers = $database->customers->find();
-            $customers = iterator_to_array($customers);
+        if ($cacheService->isOnline()) {
+            // cache is online, trying to get customers
+            $customers = json_decode($cacheService->get("customers"));
+
+            if (!$customers) {
+                // cache miss, fetch customers from database
+                $customers = $this->fetchFromDatabase();
+
+                if ($customers) {
+                    // cache them
+                    $cacheService->set("customers", json_encode($customers));
+                }
+            }
+        } else {
+            // cache is offline, hit the database
+            $customers = $this->fetchFromDatabase();
         }
 
         return new JsonResponse($customers);
+    }
+
+    protected function fetchFromDatabase()
+    {
+        $database = $this->get('database_service')->getDatabase();
+        $customers = $database->customers->find();
+        return iterator_to_array($customers);
     }
 
     /**
@@ -55,6 +74,12 @@ class CustomersController extends Controller
     {
         $database = $this->get('database_service')->getDatabase();
         $database->customers->drop();
+
+        $cacheService = $this->get('cache_service');
+        if ($cacheService->isOnline()) {
+            // delete from cache as well
+            $cacheService->del("customers");
+        }
 
         return new JsonResponse(['status' => 'Customers successfully deleted']);
     }

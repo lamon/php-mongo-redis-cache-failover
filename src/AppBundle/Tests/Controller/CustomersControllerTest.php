@@ -17,9 +17,8 @@ class CustomersControllerTest extends WebTestCase
     public function testCreateCustomers()
     {
         $customers = [
-            ['name' => 'Leandro', 'age' => 26],
-            ['name' => 'Marcelo', 'age' => 30],
-            ['name' => 'Alex', 'age' => 18],
+            ['name' => 'Lamon', 'age' => 31],
+            ['name' => 'Dany', 'age' => 31]
         ];
         $customers = json_encode($customers);
 
@@ -27,4 +26,17 @@ class CustomersControllerTest extends WebTestCase
 
         $this->assertTrue($this->client->getResponse()->isSuccessful());
     }
+
+    public function testGetCustomers()
+    {
+        $this->client->request('GET', '/customers/', [], [], ['CONTENT_TYPE' => 'application/json']);
+        $this->assertNotEquals('[]', $this->client->getResponse()->getContent());
+    }
+
+    public function testDeleteCustomers()
+    {
+        $this->client->request('DELETE', '/customers/', [], [], ['CONTENT_TYPE' => 'application/json']);
+        $this->assertTrue($this->client->getResponse()->isSuccessful());
+    }
+
 }
