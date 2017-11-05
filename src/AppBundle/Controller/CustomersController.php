@@ -52,6 +52,9 @@ class CustomersController extends Controller
      */
     public function postAction(Request $request)
     {
+
+        $this->invalidateCache();
+
         $database = $this->get('database_service')->getDatabase();
         $customers = json_decode($request->getContent());
 
@@ -75,12 +78,17 @@ class CustomersController extends Controller
         $database = $this->get('database_service')->getDatabase();
         $database->customers->drop();
 
-        $cacheService = $this->get('cache_service');
-        if ($cacheService->isOnline()) {
-            // delete from cache as well
-            $cacheService->del("customers");
-        }
+        $this->invalidateCache();
 
         return new JsonResponse(['status' => 'Customers successfully deleted']);
     }
+
+    protected function invalidateCache()
+    {
+        $cacheService = $this->get('cache_service');
+        if ($cacheService->isOnline()) {
+            $cacheService->del("customers");
+        }
+    }
+
 }
